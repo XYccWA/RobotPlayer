@@ -50,18 +50,33 @@ jobs:
       - name: 构建模组
         run: ./gradlew clean build
 
-      # 6. 提取版本号（从 gradle.properties 读取 mod_version）
-      - name: 提取版本号
-        id: get_version
+      # 6. 提取 mod_id 和 mod_version（从 gradle.properties 读取）
+      - name: 提取模组信息
+        id: get_mod_info
         run: |
-          # 从 gradle.properties 中读取 mod_version
-          VERSION=$(grep "^mod_version" gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          # 读取 mod_id
+          MOD_ID=$(grep "^mod_id" gradle.properties | cut -d'=' -f2 | tr -d ' ')
           # 如果没找到，使用默认值
-          if [ -z "$VERSION" ]; then
-            VERSION="1.0.0"
+          if [ -z "$MOD_ID" ]; then
+            MOD_ID="my-mod"
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "提取到的版本号: $VERSION"
+          
+          # 读取 mod_version
+          MOD_VERSION=$(grep "^mod_version" gradle.properties | cut -d'=' -f2 | tr -d ' ')
+          if [ -z "$MOD_VERSION" ]; then
+            MOD_VERSION="1.0.0"
+          fi
+          
+          # 组合成最终的 Release 名称
+          RELEASE_NAME="${MOD_ID}-${MOD_VERSION}"
+          
+          echo "mod_id=$MOD_ID" >> $GITHUB_OUTPUT
+          echo "mod_version=$MOD_VERSION" >> $GITHUB_OUTPUT
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          
+          echo "模组 ID: $MOD_ID"
+          echo "模组版本: $MOD_VERSION"
+          echo "Release 名称: $RELEASE_NAME"
 
       # 7. 显示构建产物列表（方便调试）
       - name: 列出构建产物
@@ -71,22 +86,16 @@ jobs:
       - name: 创建 Release 并上传构建产物
         uses: softprops/action-gh-release@v2
         with:
-          # 使用提取到的版本号作为 Release 标签（会自动创建标签）
-          tag_name: v${{ steps.get_version.outputs.version }}
+          # 使用 modid-版本号 作为标签名
+          tag_name: ${{ steps.get_mod_info.outputs.release_name }}
           # Release 名称
-          name: 版本 v${{ steps.get_version.outputs.version }}
+          name: ${{ steps.get_mod_info.outputs.release_name }}
           # 自动生成发布说明（从上次 Release 到现在的提交记录）
           generate_release_notes: true
           # 要上传的文件（支持通配符）
           files: |
             build/libs/*.jar
-            # 如果有 API 或 sources 包，可以一并上传
-            # build/libs/*-sources.jar
-            # build/libs/*-dev.jar
-          # 如果标签已存在，覆盖已有的 Release（方便修复后重新推送）
-          # 注意：如果不想覆盖，可以设置为 false
-          # 这里设为 true，方便你反复推送修复
+          # 如果标签已存在，覆盖已有的 Release
           overwrite: true
         env:
-          # 注意：这里使用 GITHUB_TOKEN，它是 GitHub 自动生成的，无需手动配置
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
