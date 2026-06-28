@@ -2,7 +2,10 @@
   "required": true,
   "package": "org.xyccwa.robot_player.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "FoodDataMixin",
+    "PlayerMovementMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
