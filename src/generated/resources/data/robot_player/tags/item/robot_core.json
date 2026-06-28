@@ -1,0 +1,9 @@
+{
+  "values": [
+    "robot_player:basic_radar",
+    "robot_player:basic_cpu",
+    "robot_player:basic_thruster",
+    "robot_player:basic_frame",
+    "robot_player:basic_battery"
+  ]
+}
